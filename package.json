@@ -1,0 +1,16 @@
+{
+  "name": "lending-protocol",
+  "version": "1.0.0",
+  "description": "Lending protocol for the tezos blockchain",
+  "main": "index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "keywords": [
+    "ligo",
+    "tezos",
+    "cameligo"
+  ],
+  "author": "Adesuwa Dawodu",
+  "license": "ISC"
+}
