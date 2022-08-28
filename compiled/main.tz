@@ -1,0 +1,443 @@
+{ parameter
+    (or (or (or (address %addDelegate) (nat %borrowTez))
+            (or (pair %borrowToken address nat) (pair %depositToken (option address) nat)))
+        (or (or (address %removeDelegate) (pair %repayLoan (option address) nat))
+            (or (pair %setDelegateLimit address nat)
+                (pair %supplyCollateral (option address) nat)))) ;
+  storage
+    (pair (pair (big_map %credit_delegators
+                   address
+                   (pair (nat %buffer) (map %delegates address nat)))
+                (big_map %credit_used address nat))
+          (pair (map %deposited_tokens address (map (option address) nat))
+                (map %token_utilization_permyriad (option address) nat))) ;
+  code { LAMBDA
+           (pair (pair (option address) nat)
+                 (pair (pair (big_map address (pair nat (map address nat))) (big_map address nat))
+                       (pair (map address (map (option address) nat)) (map (option address) nat))))
+           (pair (list operation)
+                 (pair (pair (big_map address (pair nat (map address nat))) (big_map address nat))
+                       (pair (map address (map (option address) nat)) (map (option address) nat))))
+           { UNPAIR ;
+             NIL operation ;
+             SENDER ;
+             PUSH mutez 0 ;
+             AMOUNT ;
+             COMPARE ;
+             GT ;
+             IF { DIG 2 ;
+                  DROP ;
+                  PUSH mutez 1 ;
+                  AMOUNT ;
+                  EDIV ;
+                  IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                  CAR ;
+                  NONE address ;
+                  PAIR }
+                { DUP 3 ;
+                  CAR ;
+                  IF_NONE { PUSH string "token address cannot be none" ; FAILWITH } { DROP } ;
+                  DIG 2 } ;
+             UNPAIR ;
+             DUP ;
+             IF_NONE
+               { DIG 3 }
+               { PUSH string "Not an FA1.2" ;
+                 SWAP ;
+                 CONTRACT
+                   (or (or (or (pair %approve address nat)
+                               (pair %getAllowance (pair address address) (contract nat)))
+                           (or (pair %getBalance address (contract nat))
+                               (pair %getTotalSupply unit (contract nat))))
+                       (pair %transfer address (pair address nat))) ;
+                 IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                 DIG 4 ;
+                 SWAP ;
+                 PUSH mutez 0 ;
+                 DUP 5 ;
+                 SELF_ADDRESS ;
+                 PAIR ;
+                 DUP 7 ;
+                 PAIR ;
+                 RIGHT
+                   (or (or (pair address nat) (pair (pair address address) (contract nat)))
+                       (or (pair address (contract nat)) (pair unit (contract nat)))) ;
+                 PAIR 3 ;
+                 UNPAIR 3 ;
+                 TRANSFER_TOKENS ;
+                 CONS } ;
+             DUP 5 ;
+             CDR ;
+             CDR ;
+             DUP 6 ;
+             CDR ;
+             CAR ;
+             DUP 7 ;
+             CDR ;
+             CAR ;
+             DUP 7 ;
+             GET ;
+             IF_NONE { EMPTY_MAP (option address) nat } {} ;
+             DIG 5 ;
+             DIG 5 ;
+             SWAP ;
+             SOME ;
+             SWAP ;
+             UPDATE ;
+             DIG 4 ;
+             SWAP ;
+             SOME ;
+             SWAP ;
+             UPDATE ;
+             PAIR ;
+             DIG 2 ;
+             CAR ;
+             PAIR ;
+             SWAP ;
+             PAIR } ;
+         LAMBDA
+           (pair address
+                 (pair (pair (big_map address (pair nat (map address nat))) (big_map address nat))
+                       (pair (map address (map (option address) nat)) (map (option address) nat))))
+           (pair nat (map address nat))
+           { UNPAIR ;
+             SWAP ;
+             CAR ;
+             CAR ;
+             SWAP ;
+             GET ;
+             IF_NONE { EMPTY_MAP address nat ; PUSH nat 30 ; PAIR } {} } ;
+         LAMBDA
+           (pair (pair address (pair nat (map address nat)))
+                 (pair (pair (big_map address (pair nat (map address nat))) (big_map address nat))
+                       (pair (map address (map (option address) nat)) (map (option address) nat))))
+           (pair (pair (big_map address (pair nat (map address nat))) (big_map address nat))
+                 (pair (map address (map (option address) nat)) (map (option address) nat)))
+           { UNPAIR ;
+             UNPAIR ;
+             DUP 3 ;
+             CAR ;
+             CAR ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             GET ;
+             IF_NONE
+               { DUP 3 ;
+                 CDR ;
+                 DUP 4 ;
+                 CAR ;
+                 CDR ;
+                 DIG 4 ;
+                 CAR ;
+                 CAR ;
+                 DIG 4 ;
+                 DIG 4 ;
+                 SWAP ;
+                 SOME ;
+                 SWAP ;
+                 UPDATE }
+               { DROP ;
+                 DUP 3 ;
+                 CDR ;
+                 DUP 4 ;
+                 CAR ;
+                 CDR ;
+                 DIG 4 ;
+                 CAR ;
+                 CAR ;
+                 DIG 4 ;
+                 SOME ;
+                 DIG 4 ;
+                 UPDATE } ;
+             PAIR ;
+             PAIR } ;
+         LAMBDA
+           (pair (pair address address) (pair address nat))
+           operation
+           { UNPAIR ;
+             UNPAIR ;
+             DIG 2 ;
+             UNPAIR ;
+             PUSH string "Not an FA1.2" ;
+             SWAP ;
+             CONTRACT
+               (or (or (or (pair %approve address nat)
+                           (pair %getAllowance (pair address address) (contract nat)))
+                       (or (pair %getBalance address (contract nat))
+                           (pair %getTotalSupply unit (contract nat))))
+                   (pair %transfer address (pair address nat))) ;
+             IF_NONE { FAILWITH } { SWAP ; DROP } ;
+             PUSH mutez 0 ;
+             DIG 2 ;
+             DIG 4 ;
+             PAIR ;
+             DIG 3 ;
+             PAIR ;
+             RIGHT
+               (or (or (pair address nat) (pair (pair address address) (contract nat)))
+                   (or (pair address (contract nat)) (pair unit (contract nat)))) ;
+             TRANSFER_TOKENS } ;
+         LAMBDA
+           (pair (pair address nat)
+                 (pair (pair (big_map address (pair nat (map address nat))) (big_map address nat))
+                       (pair (map address (map (option address) nat)) (map (option address) nat))))
+           (pair (pair (big_map address (pair nat (map address nat))) (big_map address nat))
+                 (pair (map address (map (option address) nat)) (map (option address) nat)))
+           { UNPAIR ;
+             UNPAIR ;
+             DUP 3 ;
+             DIG 2 ;
+             DIG 3 ;
+             CAR ;
+             CDR ;
+             DUP 4 ;
+             GET ;
+             IF_NONE { PUSH nat 0 } {} ;
+             ADD ;
+             DIG 2 ;
+             DUP 3 ;
+             CDR ;
+             DUP 4 ;
+             CAR ;
+             CDR ;
+             DUP 3 ;
+             GET ;
+             IF_NONE
+               { DUP 4 ; CAR ; CDR ; DIG 3 ; DIG 3 ; SWAP ; SOME ; SWAP ; UPDATE }
+               { DROP ; DUP 4 ; CAR ; CDR ; DIG 3 ; SOME ; DIG 3 ; UPDATE } ;
+             DIG 2 ;
+             CAR ;
+             CAR ;
+             PAIR ;
+             PAIR } ;
+         DIG 5 ;
+         UNPAIR ;
+         IF_LEFT
+           { IF_LEFT
+               { DIG 3 ;
+                 DIG 6 ;
+                 DROP 2 ;
+                 IF_LEFT
+                   { DIG 2 ;
+                     DROP ;
+                     SENDER ;
+                     DUP 3 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     PAIR ;
+                     DIG 5 ;
+                     SWAP ;
+                     EXEC ;
+                     DIG 3 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     CDR ;
+                     DUP 5 ;
+                     GET ;
+                     IF_NONE
+                       { SWAP ;
+                         DUP ;
+                         DUG 2 ;
+                         CDR ;
+                         PUSH nat 0 ;
+                         DIG 5 ;
+                         SWAP ;
+                         SOME ;
+                         SWAP ;
+                         UPDATE }
+                       { DIG 4 ; DROP 2 ; SWAP ; DUP ; DUG 2 ; CDR } ;
+                     DIG 2 ;
+                     CAR ;
+                     PAIR ;
+                     DIG 2 ;
+                     PAIR ;
+                     PAIR ;
+                     EXEC ;
+                     NIL operation }
+                   { DIG 3 ;
+                     DIG 4 ;
+                     DROP 2 ;
+                     PUSH mutez 1 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     MUL ;
+                     SENDER ;
+                     DIG 3 ;
+                     DIG 3 ;
+                     DUP 3 ;
+                     PAIR ;
+                     PAIR ;
+                     DIG 3 ;
+                     SWAP ;
+                     EXEC ;
+                     PUSH string "Not a wallet" ;
+                     DUP 3 ;
+                     CONTRACT unit ;
+                     IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                     PUSH nat 0 ;
+                     PUSH nat 0 ;
+                     DUP 4 ;
+                     CDR ;
+                     CAR ;
+                     DIG 5 ;
+                     GET ;
+                     IF_NONE { EMPTY_MAP (option address) nat } {} ;
+                     ITER { UNPAIR ;
+                            DUP 6 ;
+                            CDR ;
+                            CDR ;
+                            SWAP ;
+                            GET ;
+                            IF_NONE { DROP ; PUSH nat 0 } { MUL } ;
+                            PUSH nat 10000 ;
+                            SWAP ;
+                            EDIV ;
+                            IF_NONE { PUSH string "DIV by 0" ; FAILWITH } {} ;
+                            CAR ;
+                            ADD } ;
+                     COMPARE ;
+                     GT ;
+                     IF { NIL operation ; SWAP ; DIG 3 ; UNIT ; TRANSFER_TOKENS ; CONS }
+                        { DIG 2 ;
+                          DROP 2 ;
+                          PUSH string "Loan limit is too low for the amount you are trying to borrow" ;
+                          FAILWITH } } ;
+                 PAIR }
+               { DIG 4 ;
+                 DIG 5 ;
+                 DROP 2 ;
+                 IF_LEFT
+                   { DIG 4 ;
+                     DROP ;
+                     UNPAIR ;
+                     SENDER ;
+                     DIG 3 ;
+                     DUP 4 ;
+                     DIG 2 ;
+                     PAIR ;
+                     PAIR ;
+                     DIG 3 ;
+                     SWAP ;
+                     EXEC ;
+                     SENDER ;
+                     NIL operation ;
+                     DIG 4 ;
+                     DIG 4 ;
+                     PAIR ;
+                     DIG 2 ;
+                     SELF_ADDRESS ;
+                     PAIR ;
+                     PAIR ;
+                     DIG 3 ;
+                     SWAP ;
+                     EXEC ;
+                     CONS ;
+                     PAIR }
+                   { DIG 2 ; DIG 3 ; DROP 2 ; PAIR ; EXEC } } }
+           { IF_LEFT
+               { DIG 6 ;
+                 DROP ;
+                 IF_LEFT
+                   { DIG 2 ;
+                     DIG 3 ;
+                     DROP 2 ;
+                     SENDER ;
+                     DUP 3 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     PAIR ;
+                     DIG 5 ;
+                     SWAP ;
+                     EXEC ;
+                     DIG 3 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     CDR ;
+                     DUP 5 ;
+                     GET ;
+                     IF_NONE
+                       { DIG 3 ; DROP ; SWAP ; DUP ; DUG 2 ; CDR }
+                       { DROP ; SWAP ; DUP ; DUG 2 ; CDR ; DIG 4 ; NONE nat ; SWAP ; UPDATE } ;
+                     DIG 2 ;
+                     CAR ;
+                     PAIR ;
+                     DIG 2 ;
+                     PAIR ;
+                     PAIR ;
+                     EXEC }
+                   { DIG 4 ;
+                     DIG 5 ;
+                     DROP 2 ;
+                     UNPAIR ;
+                     NIL operation ;
+                     SENDER ;
+                     DIG 4 ;
+                     DUP 5 ;
+                     DIG 2 ;
+                     PAIR ;
+                     PAIR ;
+                     DIG 4 ;
+                     SWAP ;
+                     EXEC ;
+                     SENDER ;
+                     DIG 3 ;
+                     IF_NONE
+                       { DIG 3 ; DIG 4 ; DROP 3 ; SWAP }
+                       { DIG 3 ;
+                         DIG 4 ;
+                         DIG 2 ;
+                         PAIR ;
+                         SELF_ADDRESS ;
+                         DIG 3 ;
+                         PAIR ;
+                         PAIR ;
+                         DIG 3 ;
+                         SWAP ;
+                         EXEC ;
+                         CONS } ;
+                     DROP } ;
+                 NIL operation ;
+                 PAIR }
+               { DIG 2 ;
+                 DIG 3 ;
+                 DROP 2 ;
+                 IF_LEFT
+                   { DIG 4 ;
+                     DROP ;
+                     UNPAIR ;
+                     SENDER ;
+                     DUP 4 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     PAIR ;
+                     DIG 6 ;
+                     SWAP ;
+                     EXEC ;
+                     DIG 4 ;
+                     SWAP ;
+                     DUP ;
+                     DUG 2 ;
+                     CDR ;
+                     DUP 5 ;
+                     GET ;
+                     IF_NONE
+                       { DIG 3 ; DIG 4 ; DROP 2 ; SWAP ; DUP ; DUG 2 ; CDR }
+                       { DROP ; SWAP ; DUP ; DUG 2 ; CDR ; DIG 5 ; SOME ; DIG 5 ; UPDATE } ;
+                     DIG 2 ;
+                     CAR ;
+                     PAIR ;
+                     DIG 2 ;
+                     PAIR ;
+                     PAIR ;
+                     EXEC ;
+                     NIL operation ;
+                     PAIR }
+                   { DIG 2 ; DIG 3 ; DROP 2 ; PAIR ; EXEC } } } } }
+

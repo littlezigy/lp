@@ -62,9 +62,11 @@ let add_assert = UTILS.add_assert
 let add_fail = UTILS.add_fail
 
 module INT = INT
+#include "NAT.mligo"
 #include "MAP.mligo"
 #include "BIG_MAP.mligo"
 #include "STRING.mligo"
 #include "BYTES.mligo"
 #include "LIST.mligo"
+#include "TEZ.mligo"
 

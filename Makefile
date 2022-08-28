@@ -5,7 +5,8 @@ ifndef LIGO
 endif
 
 unit_tests:
-	$(LIGO) run test tests/unit/index.mligo 
-
+	$(LIGO) run test tests/unit_tests/index.mligo 
+system_tests:
+	$(LIGO) run test tests/system_tests/index.mligo 
 test:
 	$(LIGO) run test tests/index.mligo 

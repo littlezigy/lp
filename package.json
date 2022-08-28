@@ -4,7 +4,12 @@
   "description": "Lending protocol for the tezos blockchain",
   "main": "index.js",
   "scripts": {
-    "test": "make test"
+    "test": "make test",
+    "test:unit": "make unit_tests",
+    "test:system": "make system_tests",
+    "compile_storage": "~/ligo compile storage contracts/main.mligo \"$(cat contracts/init_storage.mligo)\" --entry-point main -p ithaca",
+    "compile_contracts": "~/ligo compile contract contracts/main.mligo > compiled/main.tz",
+    "deploy": "tezos-client originate contract LendingProtocol transferring 1 from adesuwa1 running compiled/main.tz --init 'compiled/storage.tz'"
   },
   "keywords": [
     "ligo",

@@ -1,2 +1,2 @@
-#include "unit/index.mligo"
-
+#include "unit_tests/index.mligo"
+#include "system_tests/index.mligo"

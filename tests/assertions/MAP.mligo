@@ -34,7 +34,6 @@ struct
     let to_have_key_of_value (type k v) (key, expected_value, map : k * v * ((k, v) map)) : nat =
       if _has_key(key, map)=true then
         let value = _returns_key(key, map) in
-       // let _ = Test.log("***********RETURNNING KEY**********************", _returns_key(key, map)) in
         if Test.compile_value value = Test.compile_value expected_value then 0n
         else
           let _ = print_fail("Expected ", key, " to be ", expected_value,"but got", value) in
@@ -43,10 +42,14 @@ struct
         let _ = print_fail("Expected to find", key, "in", map) in
         1n
 
+    let to_have_key_value (type k v) (key, expected_value, map : k * v * ((k, v) map)) : nat =
+        to_have_key_of_value(key, expected_value, map)
+
     let to_have_key_with_value (type k v) (key, expected_value, map : k * v * ((k, v) map)) : nat =
         to_have_key_of_value(key, expected_value, map)
 
     let to_not_have_key (type k v) (key, map : k * ((k, v) map)) : nat =
-      if _has_key(key, map)=true then 1n
+      if _has_key(key, map)=true then
+          let _ = print_fail("Expected to not have key ", key, " in ", map) in 1n
       else 0n
 end
